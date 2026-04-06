@@ -9,24 +9,23 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-	console.log("Seeding database with Lord of the Rings characters...");
+	console.log("🌱 Seeding database with Lord of the Rings data...");
 
-	// Create Gandalf as Employer
+	// Skapa Gandalf som EMPLOYER
 	const gandalf = await prisma.user.upsert({
 		where: { email: "gandalf@middleearth.com" },
 		update: {},
 		create: {
-			id: "1",
 			email: "gandalf@middleearth.com",
-			password: "$2b$10$epgDo3.ebUWtQc.5q.1234567890abcdefg", // hashed placeholder
+			password: "$2b$10$epgDo3.ebUWtQc.5q.1234567890abcdefg",
 			role: "EMPLOYER",
 		},
 	});
 
 	console.log(`✅ Employer created: ${gandalf.email}`);
 
-	// Create Employees (Fellowship members)
-	const fellowship = [
+	// Skapa employees med kopplade användare
+	const employees = [
 		{ firstName: "Frodo", lastName: "Baggins", loginCode: "FRODO9" },
 		{ firstName: "Sam", lastName: "Gamgee", loginCode: "SAM123" },
 		{ firstName: "Legolas", lastName: "Greenleaf", loginCode: "ELF42" },
@@ -41,78 +40,33 @@ async function main() {
 		{ firstName: "Pippin", lastName: "Took", loginCode: "TOOK12" },
 	];
 
-	for (const member of fellowship) {
+	for (const emp of employees) {
 		const user = await prisma.user.upsert({
-			where: { email: `${member.firstName.toLowerCase()}@shire.net` },
+			where: { email: `${emp.firstName.toLowerCase()}@shire.net` },
 			update: {},
 			create: {
-				id: crypto.randomUUID(),
-				email: `${member.firstName.toLowerCase()}@shire.net`,
-				password: "$2b$10$epgDo3.ebUWtQc.5q.1234567890abcdefg", // placeholder
+				email: `${emp.firstName.toLowerCase()}@shire.net`,
+				password: "$2b$10$epgDo3.ebUWtQc.5q.1234567890abcdefg",
 				role: "EMPLOYEE",
 			},
 		});
 
-		const employee = await prisma.employee.create({
-			data: {
-				id: crypto.randomUUID(),
-				firstName: member.firstName,
-				lastName: member.lastName,
-				loginCode: member.loginCode,
+		await prisma.employee.upsert({
+			where: { userId: user.id },
+			update: {},
+			create: {
+				...emp,
 				userId: user.id,
 			},
 		});
-
-		console.log(
-			`✅ Employee created: ${employee.firstName} ${employee.lastName}`,
-		);
 	}
 
-	// Add Availabilities: Gandalf schedules Frodo for morning shifts next week
-	const frodo = await prisma.user.findFirst({
-		where: { email: "frodo@shire.net" },
-		include: { employee: true },
-	});
-
-	if (frodo?.employee) {
-		const baseDate = new Date();
-		baseDate.setDate(baseDate.getDate() + 7); // Next week
-
-		for (let i = 0; i < 3; i++) {
-			const date = new Date(baseDate);
-			date.setDate(baseDate.getDate() + i);
-
-			await prisma.availability.create({
-				data: {
-					id: crypto.randomUUID(),
-					employeeId: frodo.employee.id,
-					date,
-					shift: "MORNING",
-				},
-			});
-
-			await prisma.scheduleEntry.create({
-				data: {
-					id: crypto.randomUUID(),
-					employeeId: frodo.employee.id,
-					date,
-					shift: "MORNING",
-					assignedBy: gandalf.id,
-				},
-			});
-
-			console.log(
-				`📅 Scheduled Frodo for MORNING shift on ${date.toISOString().split("T")[0]}`,
-			);
-		}
-	}
-
-	console.log("✅ Database seeded successfully with Middle-earth staff!");
+	console.log("✅ Seed completed!");
 }
 
 main()
 	.catch((e) => {
-		console.error("Error during seeding:", e);
+		console.error("❌ Seed failed:", e);
 		process.exit(1);
 	})
 	.finally(async () => {
