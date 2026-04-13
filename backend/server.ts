@@ -29,8 +29,8 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 app.listen(PORT, () => {
-	logger.info(`Server is running on http://localhost:3000`);
-	console.log(`Server is running on http://localhost:3000`);
+	logger.info(`Server is running on http://localhost:${PORT}`);
+	console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 // -- Login --
@@ -66,7 +66,7 @@ app.post("/auth/login", async (req, res) => {
 			{ expiresIn: "1h" },
 		);
 
-		// Returnera token och role – exakt vad frontend förväntar sig
+		// Returnera token och role – till frontend
 		return res.status(200).json({ token, role: user.role });
 	} catch (error) {
 		logger.error(`Login error: ${error}`);
@@ -147,14 +147,14 @@ app.put("/availability/:employeeId", async (req, res) => {
 	}
 });
 
-// -- Create user --
+// -- Create test user -- OBS! rensa efter test
 app.post("/create-test-user", async (req, res) => {
 	try {
 		const user = await prisma.user.create({
 			data: {
-				email: "test@example.com",
-				firstName: "Test",
-				lastName: "User",
+				email: "test2@example.com",
+				firstName: "Test2",
+				lastName: "User2",
 				password: "123456",
 				loginCode: await bcrypt.hash("123456", 10),
 			},

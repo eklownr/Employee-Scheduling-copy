@@ -38,3 +38,6 @@ Content-Type: application/json
 ###
 
 GET http://localhost:3000/availability/2
+
+###
+POST http://localhost:3000/create-test-user   
