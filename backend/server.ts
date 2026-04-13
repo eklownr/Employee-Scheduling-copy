@@ -1,7 +1,9 @@
 import express from "express";
 import { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { loginSchema } from "./types/index.js";
 import "dotenv/config";
+import logger from "./logger.js";
 
 const app = express();
 app.use(express.json());
@@ -9,6 +11,7 @@ const PORT = 3000;
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
+  logger.error("DATABASE_URL is not set");
   throw new Error("DATABASE_URL is not set");
 }
 
@@ -16,10 +19,12 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 app.listen(PORT, () => {
+  logger.info(`Server is running on http://localhost:3000`);
   console.log(`Server is running on http://localhost:3000`);
 });
 
 app.get("/ping", (req, res) => {
+  logger.info("ping/pong");
   res.json({ message: "pong" });
 });
 
@@ -32,15 +37,112 @@ app.get("/users/employees/all", async (req, res) => {
         email: true,
         firstName: true,
         lastName: true,
+        Occupation: true,
+        role: true,
       },
     });
+    logger.info("fetch all users");
     res.send(users);
   } catch (err) {
     if (err instanceof Error) {
+      logger.error(err);
       res.status(500).json({
         message: err.message,
       });
     }
     res.status(500).send("Unknown error");
+  }
+});
+
+// -- Login with email and password and compare loginCode --
+app.post("/login", async (req, res) => {
+  try {
+    // Validate input
+    const result = loginSchema.safeParse(req.body);
+    if (!result.success) {
+      logger.error(result.error);
+      res.status(400).json({ error: result.error.message });
+      return;
+    }
+    const { email, password } = result.data;
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    // Check if user exists
+    if (!user) {
+      logger.error("Invalid credentials, user do not exist");
+      return res
+        .status(401)
+        .json({ error: "Invalid credentials, user do not exist" });
+    }
+
+    // Compare loginCode
+    if (user.loginCode !== password) {
+      console.log(user.loginCode, password);
+      logger.error("Invalid credentials, wrong loginCode");
+      return res
+        .status(401)
+        .json({ error: "Invalid credentials, wrong loginCode" });
+    }
+
+    // Success response
+    logger.info("Successful login");
+    return res.status(200).json({
+      message: "Login successful",
+      userId: user.id,
+      name: user.firstName,
+    });
+  } catch (error) {
+    logger.error(`Login error: ${error}`);
+    // console.error("Login error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//Get availablity and empolyeeID
+app.get("/availability/:employeeId", async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.employeeId);
+    const availability = await prisma.availability.findMany({
+      where: { userId: employeeId },
+    });
+
+    res.status(200).json(availability);
+  } catch (error) {
+    logger.error(error);
+    // console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/availability/:employeeId", async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.employeeId);
+    const { date, shift } = req.body;
+
+    const availability = await prisma.availability.upsert({
+      //upsert är som if else, if (om where finns, updatera, annars skapa en)
+      where: {
+        userId_date_shift: {
+          userId: employeeId,
+          date: new Date(date),
+          shift: shift,
+        },
+      },
+      update: {},
+      create: {
+        userId: employeeId,
+        date: new Date(date),
+        shift: shift,
+      },
+    });
+    res.status(200).json(availability);
+  } catch (error) {
+    logger.error(error);
+    // console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
