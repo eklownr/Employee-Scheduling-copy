@@ -1,12 +1,10 @@
 import express from "express";
-import type { Request, Response, NextFunction } from "express";
+//import type { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import {
-	loginSchema,
-	userSchema,
-	AuthenticatedRequest,
-} from "./types/index.js";
+import { loginSchema, userSchema } from "./types/index.js";
+// import type { AuthenticatedRequest } from "./types/index.js";
+// import { authenticate } from "./auth.js";
 import "dotenv/config";
 import logger from "./logger.js";
 import cors from "cors";
@@ -92,8 +90,9 @@ app.post("/auth/login", async (req, res) => {
 // -- Get all employees --
 app.get(
 	"/users/employees/all",
-	middleware,
-	async (req: AuthenticatedRequest, res, next) => {
+	//authenticate,
+	async (req, res, next) => {
+		// console.log(req.user?.role);
 		//	if (req.user?.role !== "EMPLOYER") {
 		//		return res.status(403).json({ error: "Åtkomst nekad" });
 		//	}
@@ -353,16 +352,16 @@ app.get("/schedule/:id", async (req, res) => {
 	}
 });
 
-// -- middleware --
-function middleware(req: Request, res: Response, next: NextFunction) {
-	console.log(" ******************** middleware ********************");
-	const authHeader = req.headers.authorization;
-	const token = authHeader && authHeader.split(" ")[1]; // "Bearer TOKEN"
-
-	if (!token) {
-		return res.status(401).json({ error: "Ingen åtkomst – token saknas" });
-	}
-
-	logger.info(`Incoming request: ${req.method} ${req.url} ${token}`);
-	next();
-}
+// // -- middleware --
+// function middleware(req: Request, res: Response, next: NextFunction) {
+// 	console.log(" ******************** middleware ********************");
+// 	const authHeader = req.headers.authorization;
+// 	const token = authHeader && authHeader.split(" ")[1]; // "Bearer TOKEN"
+//
+// 	if (!token) {
+// 		return res.status(401).json({ error: "Ingen åtkomst – token saknas" });
+// 	}
+//
+// 	logger.info(`Incoming request: ${req.method} ${req.url} ${token}`);
+// 	next();
+// }

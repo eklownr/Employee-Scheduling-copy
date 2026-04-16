@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
-import type { AuthenticatedRequest } from "./types/index.js";
 
 // Typ för JWT-payload
 interface JwtPayload {
@@ -25,7 +24,7 @@ export const authenticate = (
 			token,
 			process.env.JWT_SECRET as string,
 		) as JwtPayload;
-		(req as AuthenticatedRequest).user = decoded; // Säker cast
+		//req.user = decoded;
 		next();
 	} catch (err) {
 		return res.status(403).json({ error: "Ogiltig eller utgången token" });

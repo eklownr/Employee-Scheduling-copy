@@ -1,10 +1,9 @@
 import { z } from "zod";
-import type { Request } from "express";
+// import type { Request } from "express";
 
-export interface AuthenticatedRequest extends Request {
-	user?: { userId: string; role: string };
-}
-
+// export interface AuthenticatedRequest extends Request {
+// 	user?: { userId: string; role: string };
+// }
 // --- Zod schemas ---
 export const loginSchema = z.object({
 	email: z.email("Invalid email address."),
