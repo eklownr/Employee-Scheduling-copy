@@ -1,0 +1,8 @@
+import { AuthenticatedRequest } from './types/auth.types';
+
+app.get('/admin', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== 'EMPLOYER') {
+    return res.status(403).json({ error: 'Åtkomst nekad' });
+  }
+  res.json({ message: 'Success' });
+});   

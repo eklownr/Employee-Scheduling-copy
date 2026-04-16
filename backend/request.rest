@@ -1,18 +1,19 @@
-GET http://localhost:3000/ping
 
 ### 
 GET http://localhost:3000/users/employees/all
 
 ###
-
-POST http://localhost:3000/add-user
+POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-    "fistname": "Bilbo",
-    "lastname": "Baggins",
-    "email":    "bilbo@shire.net",
-    "loginCode": "1234b-cryptCode-1234"
+    "email": "bilbo@shire.net",
+    "firstName": "Bilbo",
+    "lastName": "Baggins",
+    "Occupation": "RUNNER",
+    "role": "EMPLOYER",
+    "password": "1234Aa!",
+    "loginCode": "1234Aa!" 
 }   
 
 ###
@@ -20,8 +21,8 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-    "email": "frodo@shire.net",
-    "password": "FRODO9"
+    "email": "test@example.com",
+    "password": "123456"
 }   
 
 ###
@@ -36,8 +37,7 @@ Content-Type: application/json
 }
 
 ###
-
-GET http://localhost:3000/availability/2
+GET http://localhost:3000/availability/3
 
 ###
 POST http://localhost:3000/create-test-user   
