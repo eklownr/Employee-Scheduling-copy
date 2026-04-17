@@ -1,10 +1,7 @@
 import express from "express";
-//import type { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { loginSchema, userSchema } from "./types/index.js";
-// import type { AuthenticatedRequest } from "./types/index.js";
-// import { authenticate } from "./auth.js";
 import "dotenv/config";
 import logger from "./logger.js";
 import cors from "cors";
@@ -35,8 +32,6 @@ app.listen(PORT, () => {
 	logger.info(`Server is running on http://localhost:${PORT}`);
 	console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-//app.use(middleware);
 
 /* ******** Routes ******** */
 // -- Login --
@@ -78,55 +73,41 @@ app.post("/auth/login", async (req, res) => {
 			{ expiresIn: "1h" },
 		);
 
-		// Returnera token och role – till frontend
-		logger.info(`login successful: ${user.email} role: ${user.role}`);
-		return res.status(200).json({ token, role: user.role });
-	} catch (error) {
-		logger.error(`Login error: ${error}`);
-		return res.status(500).json({ error: "Internal server error" });
-	}
+    // Returnera token och role – till frontend
+    logger.info(`login successful: ${user.email} role: ${user.role}`);
+    return res.status(200).json({ token, role: user.role, userId: user.id })
+  } catch (error) {
+    logger.error(`Login error: ${error}`);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // -- Get all employees --
-app.get(
-	"/users/employees/all",
-	//authenticate,
-	async (req, res, next) => {
-		// console.log(req.user?.role);
-		//	if (req.user?.role !== "EMPLOYER") {
-		//		return res.status(403).json({ error: "Åtkomst nekad" });
-		//	}
-		res.json({ message: "Success" });
-		if (req.user?.role !== "EMPLOYER") {
-			return res.status(403).json({ error: "Åtkomst nekad" });
-		}
-		res.json({ message: "Success" });
-		try {
-			const users = await prisma.user.findMany({
-				where: { role: "EMPLOYEE" },
-				select: {
-					id: true,
-					email: true,
-					firstName: true,
-					lastName: true,
-					Occupation: true,
-					role: true,
-				},
+app.get("/users/employees/all", async (req, res) => {
+	try {
+		const users = await prisma.user.findMany({
+			where: { role: "EMPLOYEE" },
+			select: {
+				id: true,
+				email: true,
+				firstName: true,
+				lastName: true,
+				Occupation: true,
+				role: true,
+			},
+		});
+		logger.info("fetch all employees");
+		res.send(users);
+	} catch (err) {
+		if (err instanceof Error) {
+			logger.error(err);
+			res.status(500).json({
+				message: err.message,
 			});
-			logger.info("fetch all employees");
-			res.send(users);
-		} catch (err) {
-			if (err instanceof Error) {
-				logger.error(err);
-				res.status(500).json({
-					message: err.message,
-				});
-			}
-			res.status(500).send("Unknown error");
 		}
-		next();
-	},
-);
+		res.status(500).send("Unknown error");
+	}
+});
 
 // -- Get all availability --
 app.get("/availability", async (req, res) => {
@@ -167,15 +148,15 @@ app.put("/availability/:employeeId", async (req, res) => {
 			where: { userId: employeeId },
 		});
 
-		if (entries && entries.length > 0) {
-			await prisma.availability.createMany({
-				data: entries.map((entry: { date: string; shift: string }) => ({
-					userId: employeeId,
-					date: new Date(entry.date),
-					shift: entry.shift,
-				})),
-			});
-		}
+    if (entries && entries.length > 0) {
+      await prisma.availability.createMany({
+        data: entries.map((entry: { dayOfWeek: string; shift: string }) => ({
+          userId: employeeId,
+          dayOfWeek: entry.dayOfWeek,
+          shift: entry.shift,
+        })),
+      });
+    }
 
 		logger.info(`updated availability for: ${employeeId}`);
 		res.status(200).json({ message: "Availability updated" });
@@ -351,17 +332,3 @@ app.get("/schedule/:id", async (req, res) => {
 		res.status(500).json({ error: `unknown error: ${err}` });
 	}
 });
-
-// // -- middleware --
-// function middleware(req: Request, res: Response, next: NextFunction) {
-// 	console.log(" ******************** middleware ********************");
-// 	const authHeader = req.headers.authorization;
-// 	const token = authHeader && authHeader.split(" ")[1]; // "Bearer TOKEN"
-//
-// 	if (!token) {
-// 		return res.status(401).json({ error: "Ingen åtkomst – token saknas" });
-// 	}
-//
-// 	logger.info(`Incoming request: ${req.method} ${req.url} ${token}`);
-// 	next();
-// }
