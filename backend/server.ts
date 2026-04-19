@@ -7,14 +7,15 @@ import logger from "./logger.js";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { authenticate } from "./middleware/auth/auth.js";
 import { Router } from "express";
-
-// Protected routes
-const authRouter = Router();
+import { authenticate } from "./middleware/auth/auth.js";
 
 const app = express();
 app.use(express.json());
+
+// Protected routes
+const authRouter = Router();
+app.use("/api/auth", authRouter); // Mounta routen   
 
 const corsOptions = {
 	origin: "http://localhost:5173",
@@ -87,7 +88,7 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
-// -- test protected routes
+// *** test protected routes ***
 // Skyddad route – kräver auth
 authRouter.get("/profile", authenticate, async (req, res) => {
 	// authenticate-middleware sätter t.ex. req.user

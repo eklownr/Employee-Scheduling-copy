@@ -1,4 +1,4 @@
-
+GET http://localhost:3000/api/auth/profile
 ### 
 GET http://localhost:3000/users/employees/all
 
