@@ -7,12 +7,14 @@ import RegisterEmployeePage from "./pages/RegisterEmployeePage"
 import JobSchedulePage from "./pages/JobSchedulePage"
 import AvailabilityPage from "./pages/AvailabilityPage"
 import MySchedulePage from "./pages/MySchedulePage"
+import TestPage from "./pages/TestPage"; // Skapa denna komponent
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route path="/test" element={<TestPage />} />
 
         <Route path="/employees" element={
           <ProtectedRoute allowedRole="EMPLOYER">
