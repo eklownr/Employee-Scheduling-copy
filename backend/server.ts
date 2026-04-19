@@ -7,6 +7,11 @@ import logger from "./logger.js";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { authenticate } from "./middleware/auth/auth.js";
+import { Router } from "express";
+
+// Protected routes
+const authRouter = Router();
 
 const app = express();
 app.use(express.json());
@@ -81,6 +86,13 @@ app.post("/auth/login", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// -- test protected routes
+// Skyddad route – kräver auth
+authRouter.get("/profile", authenticate, async (req, res) => {
+	// authenticate-middleware sätter t.ex. req.user
+	res.json({ user: req.user });
+  });
 
 // -- Get all employees --
 app.get("/users/employees/all", async (req, res) => {
