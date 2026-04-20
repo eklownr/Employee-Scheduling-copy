@@ -13,13 +13,15 @@ import { authenticate } from "./middleware/auth/auth.js";
 const app = express();
 app.use(express.json());
 
-// Protected routes
-const authRouter = Router();
-app.use("/api/auth", authRouter); // Mounta routen   
 
 const corsOptions = {
-	origin: "http://localhost:5173",
-};
+	origin: 'http://localhost:5173',
+	methods: ['GET', 'POST', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
+	credentials: true,
+	maxAge: 86400, // Cachar preflight i 24h
+  };
+
 
 app.use(cors(corsOptions));
 
@@ -31,6 +33,11 @@ if (!connectionString) {
 	throw new Error("DATABASE_URL is not set");
 }
 
+// Protected routes
+const authRouter = Router();
+app.use("/api/auth", authRouter); // Mounta routen   
+
+// PRISMA
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
@@ -96,8 +103,11 @@ authRouter.get("/profile", authenticate, async (req, res) => {
   });
 
 // -- Get all employees --
-app.get("/users/employees/all", async (req, res) => {
+app.get("/users/employees/all", authenticate, async (req, res) => {
 	try {
+		if (req.user?.role !== "EMPLOYER") {
+			return res.status(403).json({ error: "Åtkomst nekad" });
+		}
 		const users = await prisma.user.findMany({
 			where: { role: "EMPLOYEE" },
 			select: {

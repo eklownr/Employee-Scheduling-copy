@@ -17,7 +17,7 @@ const TestPage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get("/auth/profile");
+        const res = await api.get("/api/auth/profile");
         setData(res.data);
       } catch (err: any) {
         setError(err.response?.data?.error || "Något gick fel");

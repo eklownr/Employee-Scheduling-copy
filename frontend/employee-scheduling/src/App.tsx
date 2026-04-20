@@ -7,7 +7,7 @@ import RegisterEmployeePage from "./pages/RegisterEmployeePage"
 import JobSchedulePage from "./pages/JobSchedulePage"
 import AvailabilityPage from "./pages/AvailabilityPage"
 import MySchedulePage from "./pages/MySchedulePage"
-import TestPage from "./pages/TestPage"; // Skapa denna komponent
+import TestPage from "./pages/TestPage.tsx"; // Skapa denna komponent
 
 const App = () => {
   return (
