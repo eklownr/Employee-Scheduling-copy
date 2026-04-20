@@ -13,15 +13,13 @@ import { authenticate } from "./middleware/auth/auth.js";
 const app = express();
 app.use(express.json());
 
-
 const corsOptions = {
-	origin: 'http://localhost:5173',
-	methods: ['GET', 'POST', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization'],
+	origin: "http://localhost:5173",
+	methods: ["GET", "POST", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
 	credentials: true,
 	maxAge: 86400, // Cachar preflight i 24h
-  };
-
+};
 
 app.use(cors(corsOptions));
 
@@ -35,7 +33,7 @@ if (!connectionString) {
 
 // Protected routes
 const authRouter = Router();
-app.use("/api/auth", authRouter); // Mounta routen   
+app.use("/api/auth", authRouter); // Mounta routen
 
 // PRISMA
 const adapter = new PrismaPg({ connectionString });
@@ -86,27 +84,33 @@ app.post("/auth/login", async (req, res) => {
 			{ expiresIn: "1h" },
 		);
 
-    // Returnera token och role – till frontend
-    logger.info(`login successful: ${user.email} role: ${user.role}`);
-    return res.status(200).json({ token, role: user.role, userId: user.id })
-  } catch (error) {
-    logger.error(`Login error: ${error}`);
-    return res.status(500).json({ error: "Internal server error" });
-  }
+		// Returnera token och role – till frontend
+		logger.info(`login successful: ${user.email} role: ${user.role}`);
+		return res
+			.status(200)
+			.json({ token, role: user.role, userId: user.id });
+	} catch (error) {
+		logger.error(`Login error: ${error}`);
+		return res.status(500).json({ error: "Internal server error" });
+	}
 });
 
-// *** test protected routes ***
-// Skyddad route – kräver auth
+// *** TEST protected routes ***
+// http://localhost:5173/test
+// -- Protected route -- requires authenticate-middleware
 authRouter.get("/profile", authenticate, async (req, res) => {
 	// authenticate-middleware sätter t.ex. req.user
+	logger.info("fetching profile. role: " + req.user?.role);
 	res.json({ user: req.user });
-  });
+});
 
-// -- Get all employees --
+// -- Get all employees -- *** Protected route ***
 app.get("/users/employees/all", authenticate, async (req, res) => {
 	try {
 		if (req.user?.role !== "EMPLOYER") {
-			return res.status(403).json({ error: "Åtkomst nekad" });
+			return res
+				.status(403)
+				.json({ error: "Access denied you are not EMPLOYER" });
 		}
 		const users = await prisma.user.findMany({
 			where: { role: "EMPLOYEE" },
@@ -171,15 +175,17 @@ app.put("/availability/:employeeId", async (req, res) => {
 			where: { userId: employeeId },
 		});
 
-    if (entries && entries.length > 0) {
-      await prisma.availability.createMany({
-        data: entries.map((entry: { dayOfWeek: string; shift: string }) => ({
-          userId: employeeId,
-          dayOfWeek: entry.dayOfWeek,
-          shift: entry.shift,
-        })),
-      });
-    }
+		if (entries && entries.length > 0) {
+			await prisma.availability.createMany({
+				data: entries.map(
+					(entry: { dayOfWeek: string; shift: string }) => ({
+						userId: employeeId,
+						dayOfWeek: entry.dayOfWeek,
+						shift: entry.shift,
+					}),
+				),
+			});
+		}
 
 		logger.info(`updated availability for: ${employeeId}`);
 		res.status(200).json({ message: "Availability updated" });
