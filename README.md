@@ -37,7 +37,7 @@ node.js - express - rest api - typescript - zod - JWT - bcrypt - prisma orm - po
             └── utils
 ```
 
-$\color{orange}{\large\text{Follow these steps to set up the project locally.}}$
+$\color{orange}{\large\text{Follow these steps to set up the project localy.}}$
 
 ## 1. Setup Express Server and Prisma Postgres DataBase
 
